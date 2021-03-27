@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Demo RX project</string>
+    <string name="refresh_button_label">Refresh</string>
+</resources>
