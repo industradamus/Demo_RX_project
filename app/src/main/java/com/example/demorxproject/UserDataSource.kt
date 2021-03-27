@@ -98,6 +98,34 @@ object UserDataSource {
     }
 
     /**
+     * Пример того как мы можем объеденять источники данных
+     */
+    fun getUsersWithMerge(countFirst: Int, countSecond: Int): Flowable<List<User>> {
+        return Single.merge(
+            Single.fromCallable { generateUsers(countFirst, "First Single") },
+            Single.fromCallable { generateUsers(countSecond, "Second Single") })
+    }
+
+    /**
+     * Пример того как мы можем использовать оператор zip
+     */
+    fun getUsersWithZip(): Observable<User> {
+        return Observable.zip(
+            Observable.interval(1, TimeUnit.SECONDS)
+                .map { generateUser() }
+                .subscribeOn(Schedulers.io()),
+            Observable.interval(2, TimeUnit.SECONDS)
+                .subscribeOn(Schedulers.io()),
+            { user, count ->
+                // Здесь мы сами выбираем то какой объект хоти вернуть наружу и как его смапить
+                // в данном кейсе я просто добавил доп инфу пользователю, но тут можно генерировать совершенно новый объект
+                user.additionalData = count.toString()
+                user
+            }
+        )
+    }
+
+    /**
      * Это имитация некоторого другого потока RX.
      * К примеру здесь может быть ваш запрос в базу данных или API
      */
@@ -110,7 +138,7 @@ object UserDataSource {
     }
 
 
-    private fun generateUsers(count: Int): List<User> {
+    private fun generateUsers(count: Int, marker: String? = null): List<User> {
         val users: MutableList<User> = mutableListOf()
         for (i in 0..count) {
             val n = Random.nextInt(names.size - 1)
@@ -121,7 +149,8 @@ object UserDataSource {
                     name = names[n],
                     surname = surnames[s],
                     age = Random.nextInt(100),
-                    queue = ++userCounter
+                    queue = ++userCounter,
+                    additionalData = marker.orEmpty()
                 )
             )
         }

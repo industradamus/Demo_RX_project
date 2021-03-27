@@ -12,7 +12,6 @@ import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import io.reactivex.rxjava3.subscribers.DisposableSubscriber
 import org.reactivestreams.Subscription
-import java.util.concurrent.TimeUnit
 
 
 class MainActivity : AppCompatActivity() {
@@ -30,7 +29,7 @@ class MainActivity : AppCompatActivity() {
 
         initViews()
         initSearch()
-        getUsersWithBackPressure()
+        getUsersWithZip()
     }
 
     private fun initViews() {
@@ -57,7 +56,16 @@ class MainActivity : AppCompatActivity() {
                     usersAdapter.update(filteredUsers)
                 },
                 { error -> showError(error) },
-                { Snackbar.make(binding.root, "Observable Compleated", Snackbar.LENGTH_SHORT).show() }
+                { onCompleteLog() }
+            )
+    }
+
+    private fun getUsersWithMerge(countFirst: Int, countSecond: Int) {
+        UserDataSource.getUsersWithMerge(countFirst, countSecond)
+            .subscribe(
+                { users -> usersAdapter.update(mutableUsers.apply { addAll(users) }) },
+                { error -> showError(error) },
+                { onCompleteLog() }
             )
     }
 
@@ -77,7 +85,7 @@ class MainActivity : AppCompatActivity() {
             .subscribe(
                 { user -> usersAdapter.update(mutableUsers.apply { add(user) }) },
                 { error -> showError(error) },
-                { Snackbar.make(binding.root, "Observable Compleated", Snackbar.LENGTH_SHORT).show() }
+                { onCompleteLog() }
             )
     }
 
@@ -91,7 +99,20 @@ class MainActivity : AppCompatActivity() {
                     usersAdapter.update(mutableUsers)
                 },
                 { error -> showError(error) },
-                { Snackbar.make(binding.root, "Observable Compleated", Snackbar.LENGTH_SHORT).show() }
+                { onCompleteLog() }
+            )
+    }
+
+    private fun getUsersWithZip(){
+        UserDataSource.getUsersWithZip()
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                { users ->
+                    mutableUsers.add(users)
+                    usersAdapter.update(mutableUsers)
+                },
+                { error -> showError(error) },
+                { onCompleteLog() }
             )
     }
 
@@ -125,5 +146,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun showError(error: Throwable?) {
         Snackbar.make(binding.root, "Something wrong. Error: $error", Snackbar.LENGTH_SHORT).show()
+    }
+
+    private fun onCompleteLog() {
+        Snackbar.make(binding.root, "Observable Compleated", Snackbar.LENGTH_SHORT).show()
     }
 }
